@@ -1,3 +1,5 @@
+// The ABI is generated inside a json file when the smart contract is compiled 
+// Find it in the smart contract repo at the path: /artifacts/contracts
 import abi from "../utils/BuyMeATea.json"
 import { ethers } from "ethers"
 import Head from "next/head"
@@ -6,12 +8,13 @@ import styles from "../styles/Home.module.css"
 
 export default function Home() {
   // Contract Address & ABI
-  const contractAddress = "0xd0e6cd03e98f61a4ee3b666115c9b8d9b3c98096"
+  const contractAddress = "0xe331Dd38436Ad4876cA4A79FcfB969b77015d94D"
   const contractABI = abi.abi
 
   // Component state
-  const [currentAccount, setCurrentAccount] = useState("")
   const [contract, setContract] = useState(null)
+  const [owner, setOwner] = useState("")
+  const [currentAccount, setCurrentAccount] = useState("")
   const [name, setName] = useState("")
   const [message, setMessage] = useState("")
   const [memos, setMemos] = useState([])
@@ -29,6 +32,7 @@ export default function Home() {
       })
 
       setCurrentAccount(accounts[0])
+
     } catch (error) {
       console.log(error)
     }
@@ -55,16 +59,29 @@ export default function Home() {
     }
   }
 
+  // Function to fetch owner stored on-chain.
+  const getOwner = async () => {
+    try {
+      if (contract) {
+        console.log("Fetching owner from the blockchain..")
+        const owner = await contract.getOwner()
+        console.log("Fetched owner!")
+        setOwner(owner)
+      }
+
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   // Function to fetch all memos stored on-chain.
   const getMemos = async () => {
     try {
       if (contract) {
         console.log("Fetching memos from the blockchain..")
         const memos = await contract.getMemos()
-        console.log("Fetched!")
+        console.log("Fetched memos!")
         setMemos(memos)
-      } else {
-        console.log("Metamask is not connected")
       }
 
     } catch (error) {
@@ -78,6 +95,7 @@ export default function Home() {
 
   useEffect(() => {
     getMemos()
+    getOwner()
 
     // Create an event handler function 
     // when someone sends new memo
@@ -134,6 +152,7 @@ export default function Home() {
         setName("")
         setMessage("")
       }
+
     } catch (error) {
       console.log(error)
     }
@@ -142,15 +161,20 @@ export default function Home() {
   const handleWithdraw = async () => {
     try {
       if (contract) {
-        console.log("Withdrawing...")
-        const withdrawTrans = await contract.withdraw()
+        if (currentAccount.toLowerCase() === owner.toLowerCase()) {
+          console.log("Withdrawing...")
+          const withdrawTrans = await contract.withdraw()
 
-        await withdrawTrans.wait()
+          await withdrawTrans.wait()
 
-        // console.log("Mined ", withdrawTrans.hash)
+          // console.log("Mined ", withdrawTrans.hash)
 
-        console.log("Withdrawed!")
+          console.log("Withdrawed!")
+        } else {
+          console.log("Can't withdraw by non-owner!")
+        }
       }
+
     } catch (error) {
       console.log(error)
     }
