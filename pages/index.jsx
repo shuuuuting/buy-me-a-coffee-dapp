@@ -126,13 +126,30 @@ export default function Home() {
 
         await teaTrans.wait()
 
-        console.log("Mined ", teaTrans.hash)
+        // console.log("Mined ", teaTrans.hash)
 
         console.log("Tea purchased!")
 
         // Clear the form fields.
         setName("")
         setMessage("")
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const handleWithdraw = async () => {
+    try {
+      if (contract) {
+        console.log("Withdrawing...")
+        const withdrawTrans = await contract.withdraw()
+
+        await withdrawTrans.wait()
+
+        // console.log("Mined ", withdrawTrans.hash)
+
+        console.log("Withdrawed!")
       }
     } catch (error) {
       console.log(error)
@@ -190,6 +207,14 @@ export default function Home() {
                   onClick={handleBuy}
                 >
                   Send 1 Tea for 0.001ETH
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={handleWithdraw}
+                >
+                  Withdraw
                 </button>
               </div>
             </form>
