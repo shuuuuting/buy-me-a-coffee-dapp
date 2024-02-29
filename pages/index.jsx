@@ -18,6 +18,8 @@ export default function Home() {
   const [name, setName] = useState("")
   const [message, setMessage] = useState("")
   const [memos, setMemos] = useState([])
+  const [userBalance, setUserBalance] = useState(0);
+  const [contractBalance, setContractBalance] = useState(0);
 
   const connectWallet = async () => {
     try {
@@ -47,10 +49,10 @@ export default function Home() {
         const provider = new ethers.providers.Web3Provider(ethereum)
         const signer = provider.getSigner()
         setContract(new ethers.Contract(
-          contractAddress,
-          contractABI,
-          signer
-        )
+            contractAddress,
+            contractABI,
+            signer
+          )
         )
       }
 
@@ -89,9 +91,32 @@ export default function Home() {
     }
   }
 
+  const getBalance = async (address) => {
+    const { ethereum } = window
+
+    if (ethereum) {
+      const provider = new ethers.providers.Web3Provider(ethereum);
+      const balance = await provider.getBalance(address);
+      const balanceInEth = ethers.utils.formatEther(balance);
+      return balanceInEth
+    } else {
+      console.log(error)
+      return 0
+    }
+  }
+
   useEffect(() => {
     initialize()
   }, [])
+
+  useEffect(() => {
+    if (currentAccount) {
+      getBalance(currentAccount).then((b) => setUserBalance(b))
+    }
+    if (contract) {
+      getBalance(contract.address).then((b) => setContractBalance(b))
+    }
+  }, [currentAccount, contract])
 
   useEffect(() => {
     getMemos()
@@ -189,9 +214,7 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Buy a Tea!
-        </h1>
+        <h2 className={styles.title}>Buy a Tea!</h2>
 
         {currentAccount ? (
           <div>
@@ -248,7 +271,10 @@ export default function Home() {
         )}
       </main>
 
-      {currentAccount && (<h1>Memos received</h1>)}
+      {contract && (<h4>{`Contract balance: ${contractBalance}`}</h4>)}
+      {currentAccount && (<h4>{`User balance: ${userBalance}`}</h4>)}
+      
+      {currentAccount && memos.length > 0 && (<h2>Memos received</h2>)}
 
       {currentAccount && (memos.map((memo, idx) => {
         return (
